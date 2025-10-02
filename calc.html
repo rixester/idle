@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cálculo de Evolução</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+    }
+    #resultado {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    .extra {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h2>Calculadora de Evolução de Arma</h2>
+
+  <label for="nivelInicial">Nível inicial:</label><br>
+  <input type="number" id="nivelInicial" min="1" value="1"><br>
+
+  <label for="nivelFinal">Nível final:</label><br>
+  <input type="number" id="nivelFinal" min="2" value="2"><br>
+
+  <button onclick="calcular()">Calcular Recursos</button>
+
+  <div id="resultado"></div>
+
+  <script>
+    function custoSoulBox(inicio, fim) {
+      let total = 0;
+      for (let nivel = inicio; nivel < fim; nivel++) {
+        total += 50 * nivel;
+      }
+      return total;
+    }
+
+    function calcularOndas(necessario) {
+      let total = 0;
+      let ondas = 0;
+
+      // Tabela de recompensas
+      let recompensas = [
+        { onda: 20, valor: 1 },
+        { onda: 40, valor: 2 },
+        { onda: 60, valor: 4 },
+        { onda: 80, valor: 8 },
+        { onda: 100, valor: 16 },
+        { onda: 120, valor: 32 },
+        { onda: 140, valor: 64 },
+        { onda: 160, valor: 128 },
+        { onda: 180, valor: 256 }
+      ];
+
+      // Acumula até 180
+      for (let i = 0; i < recompensas.length; i++) {
+        total += recompensas[i].valor;
+        ondas = recompensas[i].onda;
+        if (total >= necessario) return ondas;
+      }
+
+      // De 200 a 980, cada 20 ondas dá 512
+      for (let onda = 200; onda <= 980; onda += 20) {
+        total += 512;
+        ondas = onda;
+        if (total >= necessario) return ondas;
+      }
+
+      // Acima de 1000, cada 20 ondas dá 1024
+      for (let onda = 1000; ; onda += 20) {
+        total += 1024;
+        ondas = onda;
+        if (total >= necessario) return ondas;
+      }
+    }
+
+    function calcular() {
+      let inicio = parseInt(document.getElementById("nivelInicial").value);
+      let fim = parseInt(document.getElementById("nivelFinal").value);
+
+      if (fim <= inicio) {
+        document.getElementById("resultado").innerText =
+          "O nível final deve ser maior que o inicial.";
+        return;
+      }
+
+      // Soul Box acumulado
+      let totalSoulBox = custoSoulBox(inicio, fim);
+
+      // Job Keys totais (3x Soul Box)
+      let totalJobKey = totalSoulBox * 3;
+
+      // Ondas necessárias
+      let ondasNecessarias = calcularOndas(totalJobKey);
+
+      // Texto principal
+      let texto = 
+        `🔹 Evoluir do nível ${inicio} até ${fim}<br>
+         ➝ Necessário: <b>${totalSoulBox}</b> Soul Box<br>
+         ➝ Total: <b>${totalJobKey}</b> Job Key<br>
+         ➝ Ondas necessárias: <b>${ondasNecessarias}</b><br>`;
+
+      // Cenários extras: +5,10,25,50,100 níveis
+      let extras = [5, 10, 25, 50, 100];
+      texto += `<div class="extra"><b>Projeções a partir do nível ${inicio}:</b><br>`;
+      extras.forEach(pulos => {
+        let fimExtra = inicio + pulos;
+        let soul = custoSoulBox(inicio, fimExtra);
+        let keys = soul * 3;
+        let ondas = calcularOndas(keys);
+        texto += `➝ ${pulos} níveis (até ${fimExtra}): ${keys} Job Key (Ondas: ${ondas})<br>`;
+      });
+      texto += "</div>";
+
+      document.getElementById("resultado").innerHTML = texto;
+    }
+  </script>
+</body>
+</html>
