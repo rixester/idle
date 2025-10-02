@@ -1,129 +1,109 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Cálculo de Evolução</title>
+  <meta charset="utf-8">
+  <title>Calculadora de Evolução (Compilada)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-    }
-    input, button {
-      padding: 8px;
-      margin: 5px 0;
-    }
-    #resultado {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    .extra {
-      margin-top: 12px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-    }
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    input, button { padding: 8px; margin: 5px 0; }
+    #resultado { margin-top: 15px; font-weight: bold; line-height: 1.5; }
+    .bloco { margin-top: 12px; padding: 10px; border: 1px solid #ccc; background:#f9f9f9; }
+    label { display:block; margin-top:8px; }
   </style>
 </head>
 <body>
-  <h2>Calculadora de Evolução de Arma</h2>
+  <h2>Calculadora de Evolução (Resumo Compilado)</h2>
 
-  <label for="nivelInicial">Nível inicial:</label><br>
-  <input type="number" id="nivelInicial" min="1" value="1"><br>
+  <label for="nivelInicial">Nível inicial:</label>
+  <input type="number" id="nivelInicial" min="1" value="1">
 
-  <label for="nivelFinal">Nível final:</label><br>
-  <input type="number" id="nivelFinal" min="2" value="2"><br>
-
-  <button onclick="calcular()">Calcular Recursos</button>
+  <label for="nivelFinal">Nível final:</label>
+  <input type="number" id="nivelFinal" min="2" value="2">
+<br>
+  <button onclick="calcular()">Calcular</button>
 
   <div id="resultado"></div>
 
   <script>
-    function custoSoulBox(inicio, fim) {
+    // Formatação pt-BR
+    function f(n){ return n.toLocaleString('pt-BR'); }
+
+    // Soma total de Soul Box entre inicio (incl) e fim (excl)
+    function somaSoulBoxes(inicio, fim) {
       let total = 0;
-      for (let nivel = inicio; nivel < fim; nivel++) {
-        total += 50 * nivel;
-      }
+      for (let n = inicio; n < fim; n++) total += 50 * n;
       return total;
     }
 
-    function calcularOndas(necessario) {
-      let total = 0;
-      let ondas = 0;
-
-      // Tabela de recompensas
-      let recompensas = [
-        { onda: 20, valor: 1 },
-        { onda: 40, valor: 2 },
-        { onda: 60, valor: 4 },
-        { onda: 80, valor: 8 },
-        { onda: 100, valor: 16 },
-        { onda: 120, valor: 32 },
-        { onda: 140, valor: 64 },
-        { onda: 160, valor: 128 },
-        { onda: 180, valor: 256 }
-      ];
-
-      // Acumula até 180
-      for (let i = 0; i < recompensas.length; i++) {
-        total += recompensas[i].valor;
-        ondas = recompensas[i].onda;
-        if (total >= necessario) return ondas;
+    // Calcula ondas necessárias para atingir keysNecessarias
+    function calcularOndasNecessarias(keysNecessarias) {
+      let ondas = 0, keys = 0;
+      while (keys < keysNecessarias) {
+        ondas += 20;
+        if (ondas <= 180) {
+          // potências de 2: 20->1, 40->2, 60->4 ...
+          keys += Math.pow(2, (ondas / 20) - 1);
+        } else if (ondas <= 980) {
+          keys += 512;
+        } else {
+          keys += 1024;
+        }
       }
+      return ondas;
+    }
 
-      // De 200 a 980, cada 20 ondas dá 512
-      for (let onda = 200; onda <= 980; onda += 20) {
-        total += 512;
-        ondas = onda;
-        if (total >= necessario) return ondas;
-      }
+    function compilarResultado(inicio, fim) {
+      const niveis = fim - inicio; // quantidade de níveis a evoluir
+      const totalSoul = somaSoulBoxes(inicio, fim); // soma de 50*n
+      // Conversão: transformar todo soul em job keys (totalSoul * 3)
+      const conversaoKeys = totalSoul * 3;
+      // Re-injects: 800 soul box por nível -> 1600 job keys por nível
+      const reinjectSoul = niveis * 800;
+      const reinjectKeys = niveis * 1600;
+      // Total job keys
+      const totalKeys = conversaoKeys + reinjectKeys;
+      // Ondas necessárias
+      const ondas = calcularOndasNecessarias(totalKeys);
 
-      // Acima de 1000, cada 20 ondas dá 1024
-      for (let onda = 1000; ; onda += 20) {
-        total += 1024;
-        ondas = onda;
-        if (total >= necessario) return ondas;
-      }
+      return {
+        niveis, totalSoul, conversaoKeys, reinjectSoul, reinjectKeys, totalKeys, ondas
+      };
     }
 
     function calcular() {
-      let inicio = parseInt(document.getElementById("nivelInicial").value);
-      let fim = parseInt(document.getElementById("nivelFinal").value);
+      const inicio = parseInt(document.getElementById('nivelInicial').value, 10);
+      const fim = parseInt(document.getElementById('nivelFinal').value, 10);
+      const resultadoEl = document.getElementById('resultado');
+      resultadoEl.innerHTML = '';
 
-      if (fim <= inicio) {
-        document.getElementById("resultado").innerText =
-          "O nível final deve ser maior que o inicial.";
+      if (isNaN(inicio) || isNaN(fim) || fim <= inicio) {
+        resultadoEl.innerText = 'O nível final deve ser maior que o inicial.';
         return;
       }
 
-      // Soul Box acumulado
-      let totalSoulBox = custoSoulBox(inicio, fim);
+      // Resultado principal (compilado)
+      const r = compilarResultado(inicio, fim);
 
-      // Job Keys totais (3x Soul Box)
-      let totalJobKey = totalSoulBox * 3;
+      let html = `<div class="bloco">`;
+      html += `🔹 Evoluir do nível ${inicio} até ${fim}<br>`;
+      html += `➝ Necessários: <b>${f(r.totalSoul)}</b> Soul of weapons (${f(r.totalSoul)} box + ${f(r.totalSoul)} keys)<br>`;
+      html += `➝ Conversão: <b>${f(r.conversaoKeys)}</b> Job keys (para obter ${f(r.totalSoul)} soul box)<br>`;
+      html += `➝ Para os Re-injects: <b>${f(r.reinjectSoul)}</b> Soul box ou <b>${f(r.reinjectKeys)}</b> Job Key (convertendo)[800 soul box de média]<br>`;
+      html += `➝ Total: <b>${f(r.totalKeys)}</b> Job Key (conversão + re-inject)<br>`;
+      html += `➝ Ondas Totais Necessárias: <b>${f(r.ondas)}</b> ondas`;
+      html += `</div>`;
 
-      // Ondas necessárias
-      let ondasNecessarias = calcularOndas(totalJobKey);
-
-      // Texto principal
-      let texto = 
-        `🔹 Evoluir do nível ${inicio} até ${fim}<br>
-         ➝ Necessário: <b>${totalSoulBox}</b> Soul Box<br>
-         ➝ Total: <b>${totalJobKey}</b> Job Key<br>
-         ➝ Ondas necessárias: <b>${ondasNecessarias}</b><br>`;
-
-      // Cenários extras: +5,10,25,50,100 níveis
-      let extras = [5, 10, 25, 50, 100];
-      texto += `<div class="extra"><b>Projeções a partir do nível ${inicio}:</b><br>`;
-      extras.forEach(pulos => {
-        let fimExtra = inicio + pulos;
-        let soul = custoSoulBox(inicio, fimExtra);
-        let keys = soul * 3;
-        let ondas = calcularOndas(keys);
-        texto += `➝ ${pulos} níveis (até ${fimExtra}): ${keys} Job Key (Ondas: ${ondas})<br>`;
+      // Projeções extras compiladas (+5,+10,+25,+50,+100 níveis)
+      const extras = [1,5,10,25,50,100,200];
+      html += `<div class="bloco"><b>Projeções a partir do nível ${inicio} (compiladas):</b><br>`;
+      extras.forEach(p => {
+        const fimExtra = inicio + p;
+        const re = compilarResultado(inicio, fimExtra);
+        html += `➝ +${p} níveis (até ${fimExtra}): ${f(re.totalKeys)} Job Key — Ondas: ${f(re.ondas)}<br>`;
       });
-      texto += "</div>";
+      html += `</div>`;
 
-      document.getElementById("resultado").innerHTML = texto;
+      resultadoEl.innerHTML = html;
     }
   </script>
 </body>
