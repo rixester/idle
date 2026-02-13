@@ -1,173 +1,105 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="utf-8">
-  <title>Calculadora de Evolução (com Skill Drop)</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 30px; }
-    input, select, button { padding: 8px; margin: 5px 0; }
-    #resultado { margin-top: 15px; font-weight: bold; line-height: 1.5; }
-    .bloco { margin-top: 12px; padding: 10px; border: 1px solid #ccc; background:#f9f9f9; }
-    label { display:block; margin-top:8px; }
-	.td{text-align: left;padding: 8px;}
-  </style>
+<meta charset="UTF-8">
+<title>Calculadora Evolução RPG</title>
+<style>
+body {
+    font-family: Arial;
+    background-color: #111;
+    color: #eee;
+    padding: 20px;
+}
+button {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+</style>
 </head>
 <body>
-  <h2>Calculadora de Evolução (com Skill Drop)</h2>
-<table border="0" style="width:900px"><tbody>
-<tr><td>Amuletos de drop (0 a 27): <br><input type="number" id="baseIncrease" min="0" max="27" value="0" placeholder"0"></td>
-<td>Número de transmigações: <br><input type="number" id="resets" min="0" value="0" placeholder"0"></td>
-<td>Skill de Drop<br>(Transcendência): <br><input type="number" id="skillDrop" min="0" max="3" value="0" placeholder"0"></td></tr>
 
-<tr><td>Quantidade de Soul Box<br>atual: <br>
-  <input type="number" id="boxAtual" min="0" value="0" placeholder"0"></td>
-  <td>
-  Quantidade de Job Keys<br>atual: <br>
-  <input type="number" id="keysAtual" min="0" value="0" placeholder"0"></td><td></td></tr>
-<tr><td>Nível inicial: <br>
-  <input type="number" id="nivelInicial" min="1" value="1" placeholder"1">
+<h2>⚔️ Calculadora de Evolução da Arma</h2>
 
-  </td><td>Nível final: <br>
-  <input type="number" id="nivelFinal" min="2" value="2" placeholder"2"></td><td></td></tr>
-</tbody>
-</table>
- 
- 
+<label>Almas Solicitadas na Purificação:</label><br>
+<input type="number" id="lvAtual" value="1"><br><br>
 
+<label>Level Desejado:</label><br>
+<input type="number" id="lvDesejado" value="50"><br><br>
 
-  <button onclick="calcular()">Calcular</button>
+<label>Almas que possui:</label><br>
+<input type="number" id="almasDisponiveis" value="1000000"><br><br>
 
-  <div id="resultado"></div>
+<button onclick="calcular()">Calcular</button>
 
-  <script>
-    function f(n){ return n.toLocaleString('pt-BR'); }
+<hr>
+<div id="resultado"></div>
 
-    const RESET_MAP = [
-      [1,1]  ,[2,2]  ,[4,3]  ,[6,4]  ,[8,5]  ,[10,6] ,[13,7] ,[15,8],[19,9],
-      [22,10],[25,11],[29,12],[33,13],[37,14],[41,15],[46,16],
-      [50,17],[55,18],[60,19],[66,20],[71,21]
-    ];
+<script>
 
-    function getResetIncrease(resets) {
-      let inc = 0;
-      for (let i = 0; i < RESET_MAP.length; i++) {
-        if (resets >= RESET_MAP[i][0]) inc = RESET_MAP[i][1];
-        else break;
-      }
-      return inc;
+// Formato com separador de milhares
+function formatarNumero(num) {
+    return num.toLocaleString('pt-BR');
+}
+
+// Formato abreviado estilo game
+function formatarAbreviado(num) {
+    if (num >= 1e12) return (num / 1e12).toFixed(2).replace(/\.00$/, '') + " t";
+    if (num >= 1e9) return (num / 1e9).toFixed(2).replace(/\.00$/, '') + " b";
+    if (num >= 1e6) return (num / 1e6).toFixed(2).replace(/\.00$/, '') + " m";
+    if (num >= 1e3) return (num / 1e3).toFixed(2).replace(/\.00$/, '') + " k";
+    return num;
+}
+
+function calcular() {
+
+    let lvAtual = parseInt(document.getElementById("lvAtual").value);
+    let lvDesejado = parseInt(document.getElementById("lvDesejado").value);
+    let almasDisponiveis = parseInt(document.getElementById("almasDisponiveis").value);
+
+    let aumento = 11;
+    let totalNecessario = 0;
+    let lvInicial = lvAtual/10;
+    let lvBase = lvInicial;
+
+    while (lvBase < lvDesejado) {
+        let custo = lvBase * 50;
+        totalNecessario += custo;
+        lvBase += aumento;
     }
 
-    function getSkillMultiplier(skill) {
-      if (skill === 1) return 2;
-      if (skill === 2) return 3;
-      if (skill === 3) return 4;
-      if (skill === 5) return 5;
-      return 1;
+    // Simulação com almas disponíveis
+    let lvSimulado = lvInicial;
+    let almasRestantes = almasDisponiveis;
+
+    while (true) {
+        let custo = lvSimulado * 50;
+        if (almasRestantes >= custo) {
+            almasRestantes -= custo;
+            lvSimulado += aumento;
+        } else {
+            break;
+        }
     }
 
-    function somaSoulBoxes(inicio, fim) {
-      let total = 0;
-      for (let n = inicio; n < fim; n++) total += 50 * n;
-      return total;
-    }
+    let faltam = totalNecessario - almasDisponiveis;
 
-    function calcularOndasNecessarias(keysNecessarias, baseIncrease, resetIncrease, skillMult) {
-      if (keysNecessarias <= 0) return 0;
-      let ondas = 0, keys = 0;
-      const baseRecompensas = [1,2,4,8,16,32,64,128,256];
-      const extra = 1 + baseIncrease + resetIncrease;
+    document.getElementById("resultado").innerHTML =
+        `<strong>💰 Level Atual: ${formatarNumero(lvInicial)}</strong><br><br>
+        <strong>💰 Total necessário:</strong><br>
+        ${formatarNumero(totalNecessario)} almas<br>
+        (${formatarAbreviado(totalNecessario)})<br><br>
 
-      // até 180 ondas
-      for (let i = 0; i < baseRecompensas.length; i++) {
-        ondas = (i+1) * 20;
-        keys += (baseRecompensas[i] + extra) * skillMult;
-        if (keys >= keysNecessarias) return ondas;
-      }
+        <strong>🔥 Com suas almas você chega até:</strong><br>
+        Level ${formatarNumero(lvSimulado)}<br><br>
 
-      // 200 a 980
-      for (let onda = 200; onda <= 980; onda += 20) {
-        ondas = onda;
-        keys += (512 + extra) * skillMult;
-        if (keys >= keysNecessarias) return ondas;
-      }
+        ` +
+        (faltam > 0 
+            ? `<strong>❌ Faltam:</strong><br>
+               ${formatarNumero(faltam)} almas<br>
+               (${formatarAbreviado(faltam)})`
+            : `<strong>✅ Você consegue atingir o level desejado!</strong>`);
+}
+</script>
 
-      // acima de 1000
-      for (let onda = 1000; ; onda += 20) {
-        ondas = onda;
-        keys += (1024 + extra) * skillMult;
-        if (keys >= keysNecessarias) return ondas;
-      }
-    }
-
-    function compilarResultado(inicio, fim, boxAtual, keysAtual, baseIncrease, resets, skill) {
-      const niveis = fim - inicio;
-      const totalSoul = somaSoulBoxes(inicio, fim);
-      const custoLiquidoSoul = Math.max(totalSoul - boxAtual, 0);
-      const conversaoKeys = custoLiquidoSoul * 3;
-      const reinjectSoul = niveis * 750;
-      const reinjectKeys = niveis * 1500;
-      const totalKeysBruto = conversaoKeys + reinjectKeys;
-      const totalKeysFinal = Math.max(totalKeysBruto - keysAtual, 0);
-
-      const resetIncrease = getResetIncrease(resets);
-      const skillMult = getSkillMultiplier(skill);
-      const extraPerBlock = (1 + baseIncrease + resetIncrease) * skillMult;
-      const ondas = calcularOndasNecessarias(totalKeysFinal, baseIncrease, resetIncrease, skillMult);
-
-      return {
-        niveis, totalSoul, custoLiquidoSoul, conversaoKeys,
-        reinjectSoul, reinjectKeys, totalKeysBruto, keysAtual,
-        totalKeysFinal, resetIncrease, baseIncrease, skillMult,
-        extraPerBlock, ondas
-      };
-    }
-
-    function calcular() {
-      const inicio = parseInt(document.getElementById('nivelInicial').value, 10);
-      const fim = parseInt(document.getElementById('nivelFinal').value, 10);
-      const boxAtual = parseInt(document.getElementById('boxAtual').value, 10) || 0;
-      const keysAtual = parseInt(document.getElementById('keysAtual').value, 10) || 0;
-      let baseIncrease = parseInt(document.getElementById('baseIncrease').value, 10);
-      if (isNaN(baseIncrease)) baseIncrease = 0;
-      baseIncrease = Math.max(0, Math.min(27, baseIncrease));
-      const resets = parseInt(document.getElementById('resets').value, 10) || 0;
-      const skill = parseInt(document.getElementById('skillDrop').value, 10) || 0;
-
-      const resultadoEl = document.getElementById('resultado');
-      resultadoEl.innerHTML = '';
-
-      if (isNaN(inicio) || isNaN(fim) || fim <= inicio) {
-        resultadoEl.innerText = 'O nível final deve ser maior que o inicial.';
-        return;
-      }
-
-      const r = compilarResultado(inicio, fim, boxAtual, keysAtual, baseIncrease, resets, skill);
-
-      let html = `<div class="bloco">`;
-      html += `🔸 Dados de Drops<br>`;
-      html += `➡️ Acc Drop: <b>${f(r.baseIncrease)} item</b><br>`;
-      html += `➡️ Runs Drop: <b>${f(r.resetIncrease + 1)} item</b><br>`;
-      html += `➡️ Skill Drop Mult: <b>x${r.skillMult}</b><br>`;
-      html += `➡️ Total Drop: <b>${f(r.extraPerBlock)}</b><br><br>`;
-	  
-	  
-      
-      html += `🔹 Evoluir do nível <b>${inicio}</b> até <b>${fim}</b><br>`;
-      html += `➝ Soul Weapons Necessários: <b>${f(r.totalSoul)}</b> Soul of weapons (${f(r.totalSoul)} box + ${f(r.totalSoul)} keys)<br><br>`;
-      
-	  html += `➝ Estoque: ${f(boxAtual)} box → Precisa obter: <b>${f(r.custoLiquidoSoul)}</b> box ou <b>${f(r.conversaoKeys)}</b> keys  para converter em soul box)<br><br>`;
-	  
-      html += `➝ Para os Re-injects: <b>${f(r.reinjectSoul)}</b> Soul box ou <b>${f(r.reinjectKeys)}</b> Job Key<br>`;
-      html += `➝ Subtotal: <b>${f(r.totalKeysBruto)}</b> Job Key<br><br>`;
-	  
-      html += `➝ Estoque: ${f(r.keysAtual)} Job Keys<br>`;
-      html += `➝ Obter um Total final: <b>${f(r.totalKeysFinal)}</b> Job Key<br><br>`;
-
-      html += `➝ Ondas necessárias: <b>${f(r.ondas)}</b> ondas`;
-      html += `</div>`;
-
-      resultadoEl.innerHTML = html;
-    }
-  </script>
 </body>
 </html>
