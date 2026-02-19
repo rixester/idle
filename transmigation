@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Calculadora de Transmigração</title>
+
+<style>
+
+body{
+    font-family: Arial;
+    background:#1e1e1e;
+    color:white;
+    padding:20px;
+}
+
+.container{
+    background:#2b2b2b;
+    padding:20px;
+    border-radius:10px;
+    max-width:600px;
+}
+
+h2{
+    margin-top:0;
+}
+
+.grid2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:15px;
+}
+
+label{
+    font-size:13px;
+}
+
+input, select{
+    width:100%;
+    padding:10px;
+    border-radius:5px;
+    border:none;
+}
+
+button{
+    margin-top:15px;
+    width:100%;
+    padding:10px;
+    background:#4CAF50;
+    color:white;
+    font-weight:bold;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.result{
+    margin-top:15px;
+    background:#111;
+    padding:15px;
+    border-radius:8px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h2 id="titulo">Calculadora de Transmigração</h2>
+
+<div class="grid2">
+<div>
+<label id="lblIdioma">Idioma</label>
+<select onchange="trocarIdioma(this.value)">
+<option value="pt">Português</option>
+<option value="en">English</option>
+<option value="jp">日本語</option>
+</select>
+</div>
+</div>
+
+
+<label id="lblTempo">Tempo por Transmigração</label>
+
+<div class="grid2">
+<div>
+<label id="lblMinutos">Minutos</label>
+<input id="minutos" type="number" value="5">
+</div>
+
+<div>
+<label id="lblSegundos">Segundos</label>
+<input id="segundos" type="number" value="15">
+</div>
+</div>
+
+
+<label id="lblDataInicial">Data e hora inicial</label>
+<input id="dataInicial" type="datetime-local">
+
+
+<div class="grid2">
+
+<div>
+<label id="lblPontosInicial">Pontos iniciais</label>
+<input id="pontosInicial" type="number" value="0">
+</div>
+
+<div>
+<label id="lblPontosRotacao">Pontos por rotação</label>
+<input id="pontosRotacao" type="number" value="5">
+</div>
+
+</div>
+
+
+<div class="grid2">
+
+<div>
+<label id="lblAlmasInicial">Almas iniciais</label>
+<input id="almasInicial" type="number" value="0">
+</div>
+
+<div>
+<label id="lblAlmasRotacao">Almas por rotação</label>
+<input id="almasRotacao" type="number" value="2100">
+</div>
+
+</div>
+
+
+<div class="grid2">
+
+<div>
+<label id="lblObjetivo">Objetivo</label>
+<select id="tipoObjetivo">
+<option id="optAlmas" value="almas">Almas</option>
+<option id="optTransmigracao" value="pontos">Transmigração</option>
+</select>
+</div>
+
+<div>
+<label id="lblValorObjetivo">Valor objetivo</label>
+<input id="objetivoValor" type="number">
+</div>
+
+</div>
+
+
+<button id="btnCalcular" onclick="calcular()">Calcular</button>
+
+<div id="resultado" class="result"></div>
+
+</div>
+
+<script>
+
+// idioma global (CORRIGIDO)
+let idiomaAtual = "pt";
+
+
+// atalhos
+const minutosInput = document.getElementById("minutos");
+const segundosInput = document.getElementById("segundos");
+const dataInicial = document.getElementById("dataInicial");
+const pontosInicialInput = document.getElementById("pontosInicial");
+const pontosRotacaoInput = document.getElementById("pontosRotacao");
+const almasInicialInput = document.getElementById("almasInicial");
+const almasRotacaoInput = document.getElementById("almasRotacao");
+const tipoObjetivo = document.getElementById("tipoObjetivo");
+const objetivoValor = document.getElementById("objetivoValor");
+const resultado = document.getElementById("resultado");
+
+
+// CALCULO
+function calcular(){
+
+let minutos = Number(minutosInput.value) || 0;
+let segundos = Number(segundosInput.value) || 0;
+
+let tempoRotacao = minutos*60 + segundos;
+
+if(tempoRotacao <= 0){
+resultado.innerHTML = "Tempo inválido";
+return;
+}
+
+let dataInicialValor = dataInicial.value;
+
+let pontosInicial = Number(pontosInicialInput.value) || 0;
+let pontosRotacao = Number(pontosRotacaoInput.value) || 0;
+
+let almasInicial = Number(almasInicialInput.value) || 0;
+let almasRotacao = Number(almasRotacaoInput.value) || 0;
+
+let tipo = tipoObjetivo.value;
+let objetivo = Number(objetivoValor.value) || 0;
+
+let transmigracoes = 0;
+
+if(tipo == "almas"){
+if(almasRotacao > 0)
+transmigracoes = Math.ceil((objetivo - almasInicial)/almasRotacao);
+}else{
+if(pontosRotacao > 0)
+transmigracoes = Math.ceil((objetivo - pontosInicial)/pontosRotacao);
+}
+
+if(transmigracoes < 0) transmigracoes = 0;
+
+
+let tempoTotal = transmigracoes * tempoRotacao;
+
+let dias = Math.floor(tempoTotal / 86400);
+
+let resto = tempoTotal % 86400;
+
+let horas = Math.floor(resto / 3600);
+resto = resto % 3600;
+
+let minutosRest = Math.floor(resto / 60);
+let segundosRest = resto % 60;
+
+
+
+let dataFinalTexto = "-";
+
+if(dataInicialValor){
+
+let data = new Date(dataInicialValor);
+
+data.setSeconds(data.getSeconds() + tempoTotal);
+
+let locale = "pt-BR";
+
+if(idiomaAtual == "en") locale = "en-US";
+if(idiomaAtual == "jp") locale = "ja-JP";
+
+dataFinalTexto =
+data.toLocaleDateString(locale) + " " +
+data.toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit"});
+}
+
+
+let almasFinal = almasInicial + transmigracoes*almasRotacao;
+let pontosGanhos = transmigracoes*pontosRotacao;
+let pontosFinal = pontosInicial + pontosGanhos;
+
+
+let lang = idiomas[idiomaAtual];
+
+resultado.innerHTML = `
+<b>${lang.resTitulo}</b><br><br>
+
+<b>${lang.resTransIni}</b> ${pontosInicial}<br>
+<b>${lang.resAlmasIni}</b> ${almasInicial}<br><br>
+
+<b>${lang.resTransReal}</b> ${transmigracoes}<br><br>
+
+<b>${lang.resTempo}</b>
+${dias}d ${horas}h ${minutosRest}m ${segundosRest}s<br>
+<br>
+
+<b>${lang.resData}</b>
+${dataFinalTexto}<br><br>
+
+<b>${lang.resAlmasFinal}</b> ${almasFinal}<br>
+<b>${lang.resPontosGanhos}</b> ${pontosGanhos}<br>
+<b>${lang.resTransFinal}</b> ${pontosFinal}
+`;
+
+}
+
+
+
+// TRADUTOR
+const idiomas = {
+
+pt:{
+titulo:"Calculadora de Transmigração",
+lblIdioma:"Idioma",
+lblTempo:"Tempo por Transmigração",
+lblMinutos:"Minutos",
+lblSegundos:"Segundos",
+lblDataInicial:"Data e hora inicial",
+lblPontosInicial:"Pontos iniciais",
+lblPontosRotacao:"Pontos por rotação",
+lblAlmasInicial:"Almas iniciais",
+lblAlmasRotacao:"Almas por rotação",
+lblObjetivo:"Objetivo",
+lblValorObjetivo:"Valor objetivo",
+btnCalcular:"Calcular",
+
+optAlmas:"Almas",
+optTransmigracao:"Transmigração",
+
+resTitulo:"RESULTADOS",
+resTransIni:"Transmigrações iniciais:",
+resAlmasIni:"Almas iniciais:",
+resTransReal:"Transmigrações realizadas:",
+resTempo:"Tempo total:",
+resData:"Data final:",
+resAlmasFinal:"Almas finais:",
+resPontosGanhos:"Pontos ganhos:",
+resTransFinal:"Transmigrações finais:"
+},
+
+en:{
+titulo:"Transmigration Calculator",
+lblIdioma:"Language",
+lblTempo:"Time per Transmigration",
+lblMinutos:"Minutes",
+lblSegundos:"Seconds",
+lblDataInicial:"Start date and time",
+lblPontosInicial:"Starting points",
+lblPontosRotacao:"Points per transmigration",
+lblAlmasInicial:"Starting souls",
+lblAlmasRotacao:"Souls per transmigration",
+lblObjetivo:"Goal",
+lblValorObjetivo:"Goal value",
+btnCalcular:"Calculate",
+
+optAlmas:"Souls",
+optTransmigracao:"Transmigration",
+
+resTitulo:"RESULTS",
+resTransIni:"Starting transmigrations:",
+resAlmasIni:"Starting souls:",
+resTransReal:"Transmigrations done:",
+resTempo:"Total time:",
+resData:"Completion date:",
+resAlmasFinal:"Final souls:",
+resPontosGanhos:"Points earned:",
+resTransFinal:"Final transmigrations:"
+},
+
+jp:{
+titulo:"転生計算機",
+lblIdioma:"言語",
+lblTempo:"転生時間",
+lblMinutos:"分",
+lblSegundos:"秒",
+lblDataInicial:"開始日時",
+lblPontosInicial:"開始ポイント",
+lblPontosRotacao:"転生ごとのポイント",
+lblAlmasInicial:"開始ソウル",
+lblAlmasRotacao:"転生ごとのソウル",
+lblObjetivo:"目標",
+lblValorObjetivo:"目標値",
+btnCalcular:"計算する",
+optAlmas:"ソウル",
+optTransmigracao:"転生",
+
+resTitulo:"結果",
+resTransIni:"開始転生:",
+resAlmasIni:"開始ソウル:",
+resTransReal:"転生回数:",
+resTempo:"必要時間:",
+resData:"完了日時:",
+resAlmasFinal:"最終ソウル:",
+resPontosGanhos:"獲得ポイント:",
+resTransFinal:"最終転生:"
+}
+
+};
+
+
+function trocarIdioma(id){
+
+idiomaAtual = id;
+
+let lang = idiomas[id];
+
+titulo.innerText = lang.titulo;
+lblIdioma.innerText = lang.lblIdioma;
+lblTempo.innerText = lang.lblTempo;
+lblMinutos.innerText = lang.lblMinutos;
+lblSegundos.innerText = lang.lblSegundos;
+lblDataInicial.innerText = lang.lblDataInicial;
+lblPontosInicial.innerText = lang.lblPontosInicial;
+lblPontosRotacao.innerText = lang.lblPontosRotacao;
+lblAlmasInicial.innerText = lang.lblAlmasInicial;
+lblAlmasRotacao.innerText = lang.lblAlmasRotacao;
+lblObjetivo.innerText = lang.lblObjetivo;
+lblValorObjetivo.innerText = lang.lblValorObjetivo;
+btnCalcular.innerText = lang.btnCalcular;
+optAlmas.innerText = lang.optAlmas;
+optTransmigracao.innerText = lang.optTransmigracao;
+
+}
+
+</script>
+
+</body>
+</html>
